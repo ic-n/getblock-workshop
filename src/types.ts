@@ -11,11 +11,11 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  TICK_RATE_MS: 1000,
-  COLLECTION_SIZE: 80,
-  INITIAL_AGENTS: 30,
-  NEW_AGENT_CHANCE: 0.05,
-  TOKENS_PER_SECOND: 100,
+  TICK_RATE_MS: 800,    // faster ticks = snappier feel
+  COLLECTION_SIZE: 30,  // ~24 ticks to mint out → ~20s mint phase, then secondary market
+  INITIAL_AGENTS: 20,   // enough wallets for visible leaderboard competition
+  NEW_AGENT_CHANCE: 0.08, // steady trickle of new participants
+  TOKENS_PER_SECOND: 200, // bigger numbers → more dramatic leaderboard movement
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

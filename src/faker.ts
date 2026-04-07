@@ -8,15 +8,22 @@ import type { Agent, Config, NFTEvent } from './types';
 export const MARKETPLACE_ADDRESS = 'MAGIC_EDEN_PROGRAM_1111111111111111111111111';
 const COLLECTION_NAME = 'MadLad';
 
-// Weighted action pool — DO_NOTHING appears 4× so it wins most rolls
-const ACTION_POOL = [
-  'DO_NOTHING', 'DO_NOTHING', 'DO_NOTHING', 'DO_NOTHING',
-  'MINT', 'LIST', 'UNLIST', 'BUY',
-] as const;
+// Action pool — DO_NOTHING removed. The exponential gate below is the "do nothing" decision.
+// Each action has equal weight; conditions (sold out, has NFT, etc.) act as the real filter.
+const ACTION_POOL = ['MINT', 'LIST', 'UNLIST', 'BUY'] as const;
 type Action = (typeof ACTION_POOL)[number];
 
 function roll(): Action {
   return ACTION_POOL[Math.floor(Math.random() * ACTION_POOL.length)];
+}
+
+// Knuth shuffle — in-place Fisher-Yates
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,45 +74,40 @@ export class Faker {
     const now = Date.now();
     const events: NFTEvent[] = [];
 
-    // Small chance a brand-new agent joins each tick
     if (Math.random() < this.config.NEW_AGENT_CHANCE) {
       this.spawnAgents(1);
     }
 
     const mintedOut = this.nextNftId >= this.config.COLLECTION_SIZE;
+    // Snapshot listed NFTs once — BUY picks from this list for the whole tick
     const listed = [...this.nfts.values()].filter(n => n.listed);
 
-    for (const agent of this.wallets) {
+    // Shuffle so no wallet index has a structural advantage
+    const shuffled = shuffle([...this.wallets]);
+
+    // Exponential gate: 1st agent always goes, each subsequent event makes the
+    // next agent 4× less likely to act → effectively 1 event per tick, with
+    // occasional 2nd for drama (25% after 1st event, 6.25% after 2nd, …)
+    let actedCount = 0;
+
+    for (const agent of shuffled) {
+      if (Math.random() >= 1 / Math.pow(4, actedCount)) continue;
+
       let action = roll();
+      if (action === 'MINT' && mintedOut)  action = 'BUY';
+      if (action === 'BUY'  && !mintedOut) continue; // no secondary market yet
 
-      // Sold out → mint attempts become buy attempts
-      if (action === 'MINT' && mintedOut) action = 'BUY';
-
-      // Buy only makes sense when sold out (primary market closed)
-      if (action === 'BUY' && !mintedOut) action = 'DO_NOTHING';
-
+      let event: NFTEvent | null = null;
       switch (action) {
-        case 'MINT': {
-          const event = this.doMint(agent, now);
-          if (event) events.push(event);
-          break;
-        }
-        case 'LIST': {
-          const event = this.doList(agent, now);
-          if (event) events.push(event);
-          break;
-        }
-        case 'UNLIST': {
-          const event = this.doUnlist(agent, now);
-          if (event) events.push(event);
-          break;
-        }
-        case 'BUY': {
-          const event = this.doBuy(agent, listed, now);
-          if (event) events.push(event);
-          break;
-        }
-        // DO_NOTHING — fall through
+        case 'MINT':  event = this.doMint(agent, now);         break;
+        case 'LIST':  event = this.doList(agent, now);         break;
+        case 'UNLIST': event = this.doUnlist(agent, now);      break;
+        case 'BUY':   event = this.doBuy(agent, listed, now);  break;
+      }
+
+      if (event) {
+        events.push(event);
+        actedCount++;
       }
     }
 
