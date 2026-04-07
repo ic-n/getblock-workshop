@@ -1,6 +1,6 @@
-import {
+import { DEFAULT_CONFIG } from './types';
+import type {
   Config,
-  DEFAULT_CONFIG,
   Agent,
   NFTEvent,
   HolderEntry,

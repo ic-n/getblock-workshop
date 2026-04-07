@@ -1,4 +1,5 @@
-import { Agent, Config, DEFAULT_CONFIG, NFTEvent } from './types';
+import { DEFAULT_CONFIG } from './types';
+import type { Agent, Config, NFTEvent } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants

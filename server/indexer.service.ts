@@ -1,35 +1,43 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { AllocationEngine } from '../src/engine';
 import { MockAdapter } from '../src/mock-adapter';
-import { DEFAULT_CONFIG, NFTEvent, StateSnapshot } from '../src/types';
+import { DEFAULT_CONFIG } from '../src/types';
+import type { NFTEvent, StateSnapshot } from '../src/types';
 
 @Injectable()
-export class IndexerService implements OnModuleInit, OnModuleDestroy {
+export class IndexerService implements OnModuleDestroy {
   private readonly logger = new Logger(IndexerService.name);
   private readonly config = DEFAULT_CONFIG;
   private readonly engine = new AllocationEngine(this.config);
   private readonly adapter = new MockAdapter(this.config);
   private readonly snapshots$ = new Subject<StateSnapshot>();
   private tickTimer: NodeJS.Timeout | null = null;
+  private running = false;
 
-  /** Frontend subscribes to this stream for live state updates. */
+  /** SSE stream — frontend subscribes once, receives snapshots every tick. */
   get stream() {
     return this.snapshots$.asObservable();
   }
 
-  onModuleInit() {
-    // Register the marketplace program so it's excluded from allocation
-    this.engine.registerAgent(this.adapter.faker.marketplace);
+  get isRunning() {
+    return this.running;
+  }
 
-    // Register all initial agents
+  // ── Start / Stop ───────────────────────────────────────────────────────────
+
+  startSimulation(): void {
+    if (this.running) return;
+    this.running = true;
+
+    // Register marketplace program + all initial agents with the engine
+    this.engine.registerAgent(this.adapter.faker.marketplace);
     for (const agent of this.adapter.faker.getAgents()) {
       this.engine.registerAgent(agent);
     }
 
     // Wire adapter → engine: every on-chain event flows through here
     this.adapter.on('nft_event', (event: NFTEvent) => {
-      // Re-register agents in case new ones spawned this tick
       for (const agent of this.adapter.faker.getAgents()) {
         this.engine.registerAgent(agent);
       }
@@ -39,17 +47,15 @@ export class IndexerService implements OnModuleInit, OnModuleDestroy {
 
     this.adapter.start();
 
-    // Allocation tick + SSE broadcast — runs every TICK_RATE_MS
+    // Allocation tick + SSE broadcast every TICK_RATE_MS
     this.tickTimer = setInterval(() => {
       this.engine.tick();
-      const snapshot = this.engine.getSnapshot();
-      this.snapshots$.next(snapshot);
+      this.snapshots$.next(this.engine.getSnapshot());
     }, this.config.TICK_RATE_MS);
 
     this.logger.log(
-      `Indexer started — ${this.config.COLLECTION_SIZE} NFT collection, ` +
-      `${this.config.INITIAL_AGENTS} agents, ` +
-      `${this.config.TICK_RATE_MS}ms ticks`
+      `Simulation started — ${this.config.COLLECTION_SIZE} NFT collection, ` +
+      `${this.config.INITIAL_AGENTS} agents, ${this.config.TICK_RATE_MS}ms ticks`,
     );
   }
 
