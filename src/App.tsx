@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSse } from './hooks/useSse';
+import { useStats } from './hooks/useStats';
 import { Navbar } from './components/Navbar';
-import { MintLog } from './components/MintLog';
+import { StatsPanel } from './components/StatsPanel';
 import { MarketplaceGrid } from './components/MarketplaceGrid';
 import { EventLog } from './components/EventLog';
 import { Leaderboard } from './components/Leaderboard';
@@ -10,6 +11,7 @@ const API = 'http://localhost:3001';
 
 export default function App() {
   const { snapshot, connected } = useSse();
+  const stats = useStats(snapshot);
   const [starting, setStarting] = useState(false);
   const [simStarted, setSimStarted] = useState(false);
 
@@ -30,13 +32,15 @@ export default function App() {
       <Navbar snapshot={snapshot} connected={connected} />
 
       <main className="flex-1 grid grid-cols-4 gap-3 p-3 min-h-0">
-        <MintLog events={snapshot?.recentMints ?? []} />
+        <StatsPanel stats={stats} snapshot={snapshot} />
         <MarketplaceGrid items={snapshot?.marketplace ?? []} />
-        <EventLog events={snapshot?.recentEvents ?? []} />
+        <EventLog
+          mints={snapshot?.recentMints ?? []}
+          events={snapshot?.recentEvents ?? []}
+        />
         <Leaderboard entries={snapshot?.leaderboard ?? []} />
       </main>
 
-      {/* Splash overlay — visible until simulation starts */}
       {!started && (
         <div className="absolute inset-0 bg-zinc-950/95 backdrop-blur-sm flex flex-col items-center justify-center gap-8 z-50">
           <div className="flex flex-col items-center gap-3">
@@ -65,13 +69,11 @@ export default function App() {
 
             {!connected && (
               <p className="text-zinc-600 text-xs">
-                Waiting for server on{' '}
-                <span className="text-zinc-400">localhost:3001</span>…
+                Waiting for server on <span className="text-zinc-400">localhost:3001</span>…
               </p>
             )}
           </div>
 
-          {/* Architecture hint for the workshop */}
           <div className="absolute bottom-8 text-center text-zinc-700 text-xs space-y-1">
             <p>[Faker] → [MockAdapter] → [AllocationEngine] → [SSE] → [Dashboard]</p>
             <p className="text-zinc-600">swap MockAdapter for YellowstoneAdapter to go live</p>

@@ -3,6 +3,7 @@ import { agentLabel } from '../lib/fmt';
 import { Panel, Empty } from './MintLog';
 
 interface Props {
+  mints: NFTEvent[];
   events: NFTEvent[];
 }
 
@@ -23,12 +24,14 @@ const TYPE_ICON: Record<EventType, string> = {
 };
 
 function formatEvent(e: NFTEvent): React.ReactNode {
-  const from = agentLabel(e.from);
-  const to   = agentLabel(e.to);
-  const nft  = <span className="text-zinc-300">{e.nftName}</span>;
+  const from  = agentLabel(e.from);
+  const to    = agentLabel(e.to);
+  const nft   = <span className="text-zinc-300">{e.nftName}</span>;
   const color = TYPE_COLOR[e.type];
 
   switch (e.type) {
+    case 'MINT':
+      return <><span className={color}>{to}</span> minted {nft}</>;
     case 'LIST':
       return <><span className={color}>{from}</span> listed {nft}</>;
     case 'UNLIST':
@@ -37,18 +40,21 @@ function formatEvent(e: NFTEvent): React.ReactNode {
       return <><span className={color}>{to}</span> bought {nft}</>;
     case 'TRANSFER':
       return <>{nft} <span className={color}>{from} → {to}</span></>;
-    default:
-      return <>{e.type} {nft}</>;
   }
 }
 
-export function EventLog({ events }: Props) {
+export function EventLog({ mints, events }: Props) {
+  // Merge both streams and sort newest-first by slot
+  const combined = [...mints, ...events]
+    .sort((a, b) => b.slot - a.slot || b.timestamp - a.timestamp)
+    .slice(0, 40);
+
   return (
-    <Panel title="Event Log" count={events.length}>
-      {events.length === 0 ? (
+    <Panel title="Event Log" count={combined.length}>
+      {combined.length === 0 ? (
         <Empty text="Waiting for events…" />
       ) : (
-        events.map((e, i) => {
+        combined.map((e, i) => {
           const color = TYPE_COLOR[e.type];
           const icon  = TYPE_ICON[e.type];
           return (
