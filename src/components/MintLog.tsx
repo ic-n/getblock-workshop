@@ -1,4 +1,4 @@
-import type { NFTEvent } from '../types';
+import type { NFTEvent } from '../../shared/types';
 import { agentLabel } from '../lib/fmt';
 
 interface Props {

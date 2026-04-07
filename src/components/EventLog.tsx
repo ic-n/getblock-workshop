@@ -1,4 +1,4 @@
-import type { NFTEvent, EventType } from '../types';
+import type { NFTEvent, EventType } from '../../shared/types';
 import { agentLabel } from '../lib/fmt';
 import { Panel, Empty } from './MintLog';
 

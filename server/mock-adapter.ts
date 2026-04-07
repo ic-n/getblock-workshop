@@ -1,5 +1,5 @@
-import { DEFAULT_CONFIG } from './types';
-import type { Adapter, Config, NFTEvent } from './types';
+import { DEFAULT_CONFIG } from '../shared/types';
+import type { Adapter, Config, NFTEvent } from '../shared/types';
 import { Faker } from './faker';
 
 // ─────────────────────────────────────────────────────────────────────────────

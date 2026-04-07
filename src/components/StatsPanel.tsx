@@ -1,4 +1,4 @@
-import type { StateSnapshot } from '../types';
+import type { StateSnapshot } from '../../shared/types';
 import type { Stats } from '../hooks/useStats';
 import { fmtTokens } from '../lib/fmt';
 import { Panel } from './MintLog';

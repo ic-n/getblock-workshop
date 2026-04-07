@@ -1,4 +1,4 @@
-import type { StateSnapshot } from '../types';
+import type { StateSnapshot } from '../../shared/types';
 import { fmtTokens } from '../lib/fmt';
 
 interface Props {

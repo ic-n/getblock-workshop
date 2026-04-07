@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { StateSnapshot } from '../types';
+import type { StateSnapshot } from '../../shared/types';
 
 const SSE_URL = 'http://localhost:3001/events';
 

@@ -1,5 +1,5 @@
-import { DEFAULT_CONFIG } from './types';
-import type { Agent, Config, NFTEvent } from './types';
+import { DEFAULT_CONFIG } from '../shared/types';
+import type { Agent, Config, NFTEvent } from '../shared/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -215,4 +215,3 @@ export class Faker {
     }
   }
 }
-

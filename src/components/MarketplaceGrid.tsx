@@ -1,4 +1,4 @@
-import type { MarketplaceEntry } from "../types";
+import type { MarketplaceEntry } from "../../shared/types";
 import { sinceMs } from "../lib/fmt";
 import { Panel, Empty } from "./MintLog";
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { EventType, StateSnapshot } from '../types';
+import type { EventType, StateSnapshot } from '../../shared/types';
 
 export interface Stats {
   totalEvents: number;

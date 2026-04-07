@@ -1,9 +1,9 @@
 import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Subject } from 'rxjs';
-import { AllocationEngine } from '../src/engine';
-import { MockAdapter } from '../src/mock-adapter';
-import { DEFAULT_CONFIG } from '../src/types';
-import type { NFTEvent, StateSnapshot } from '../src/types';
+import { AllocationEngine } from './engine';
+import { MockAdapter } from './mock-adapter';
+import { DEFAULT_CONFIG } from '../shared/types';
+import type { NFTEvent, StateSnapshot } from '../shared/types';
 
 @Injectable()
 export class IndexerService implements OnModuleDestroy {

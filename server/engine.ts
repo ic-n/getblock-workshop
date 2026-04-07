@@ -1,4 +1,4 @@
-import { DEFAULT_CONFIG } from './types';
+import { DEFAULT_CONFIG } from '../shared/types';
 import type {
   Config,
   Agent,
@@ -6,7 +6,7 @@ import type {
   HolderEntry,
   MarketplaceEntry,
   StateSnapshot,
-} from './types';
+} from '../shared/types';
 
 // Internal record of a single NFT's current holding state
 interface Holding {

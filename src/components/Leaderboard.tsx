@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import type { HolderEntry } from '../types';
+import type { HolderEntry } from '../../shared/types';
 import { fmtTokens } from '../lib/fmt';
 import { Panel, Empty } from './MintLog';
 
