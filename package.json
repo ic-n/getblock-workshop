@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "cache-images": "node scripts/cache-images.mjs",
     "dev": "vite",
     "server": "tsx --tsconfig tsconfig.server.json server/main.ts",
     "server:dev": "tsx --tsconfig tsconfig.server.json --watch server/main.ts",
