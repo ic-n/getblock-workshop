@@ -4,22 +4,22 @@ import type { StateSnapshot } from '../../shared/types';
 const SSE_URL = 'http://localhost:3001/events';
 
 export function useSse() {
-  const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
-  const [connected, setConnected] = useState(false);
+    const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
+    const [connected, setConnected] = useState(false);
 
-  useEffect(() => {
-    const es = new EventSource(SSE_URL);
+    useEffect(() => {
+        const es = new EventSource(SSE_URL);
 
-    es.onopen = () => setConnected(true);
+        es.onopen = () => setConnected(true);
 
-    es.onmessage = (e: MessageEvent<string>) => {
-      setSnapshot(JSON.parse(e.data) as StateSnapshot);
-    };
+        es.onmessage = (e: MessageEvent<string>) => {
+            setSnapshot(JSON.parse(e.data) as StateSnapshot);
+        };
 
-    es.onerror = () => setConnected(false);
+        es.onerror = () => setConnected(false);
 
-    return () => es.close();
-  }, []);
+        return () => es.close();
+    }, []);
 
-  return { snapshot, connected };
+    return { snapshot, connected };
 }
