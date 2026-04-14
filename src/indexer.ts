@@ -1,6 +1,5 @@
 import { CommitmentLevel, SubscribeUpdate } from "@triton-one/yellowstone-grpc";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { decodeUpdate } from "./decoder";
 
 export interface GeyserClient {
   subscribe(): Promise<{
@@ -22,13 +21,14 @@ export class NftHoldIndexer {
     const stream = await this.client.subscribe();
 
     await new Promise<void>((resolve, reject) => {
-      stream.on("data", (u) => {
-        // todo
+      stream.on("data", (u) => this.onData(u as SubscribeUpdate));
+      stream.on("error", reject);
+      stream.on("end", () => {
+        this.onEnd();
+        resolve();
       });
 
-      stream.on("error", reject);
-      stream.on("end", () => resolve());
-
+      // start streaming with filters
       stream.write({
         accounts: Object.fromEntries(
           [...this.mints].map((mint) => [
@@ -46,7 +46,16 @@ export class NftHoldIndexer {
     });
   }
 
-  holdSlots(wallet: string): number {
-    return 0;
+  onData(u: SubscribeUpdate) {
+    // todo
+  }
+
+  onEnd() {
+    // todo
+  }
+
+  checkAllocation(wallet: string): number {
+    // todo
+    return -1;
   }
 }

@@ -42,7 +42,7 @@ describe("NftHoldIndexer", () => {
     const indexer = makeIndexer();
     await indexer.run();
 
-    expect(indexer.holdSlots(ALICE)).toBe(1);
+    expect(indexer.checkAllocation(ALICE)).toBe(1);
   });
 
   it("excludes escrow address from hold allocation", async () => {
@@ -60,8 +60,8 @@ describe("NftHoldIndexer", () => {
     const indexer = makeIndexer();
     await indexer.run();
 
-    expect(indexer.holdSlots(ESCROW)).toBe(0);
-    expect(indexer.holdSlots(ALICE)).toBe(1);
+    expect(indexer.checkAllocation(ESCROW)).toBe(0);
+    expect(indexer.checkAllocation(ALICE)).toBe(1);
   });
 
   it("closes current holder's period at stream EOF (end of subscription)", async () => {
@@ -80,7 +80,7 @@ describe("NftHoldIndexer", () => {
     const indexer = makeIndexer();
     await indexer.run();
 
-    expect(indexer.holdSlots(BOB)).toBe(1);
+    expect(indexer.checkAllocation(BOB)).toBe(1);
   });
 
   // ── Integration: full MadLads airdrop allocation scenario ──────────────────
@@ -106,9 +106,9 @@ describe("NftHoldIndexer", () => {
     const indexer = makeIndexer();
     await indexer.run();
 
-    expect(indexer.holdSlots(ALICE)).toBe(1); // mint → listing
-    expect(indexer.holdSlots(ESCROW)).toBe(0); // program — no allocation
-    expect(indexer.holdSlots(BOB)).toBe(1); // purchase → stream end
+    expect(indexer.checkAllocation(ALICE)).toBe(1); // mint → listing
+    expect(indexer.checkAllocation(ESCROW)).toBe(0); // program — no allocation
+    expect(indexer.checkAllocation(BOB)).toBe(1); // purchase → stream end
   });
 
   it("accumulates across multiple hold periods for the same wallet (re-buy)", async () => {
@@ -133,8 +133,8 @@ describe("NftHoldIndexer", () => {
     const indexer = makeIndexer();
     await indexer.run();
 
-    expect(indexer.holdSlots(ALICE)).toBe(2); // (S+2 - S+1) + (S+6 - S+5) = 1 + 1
-    expect(indexer.holdSlots(BOB)).toBe(1); // S+4 - S+3 = 1
+    expect(indexer.checkAllocation(ALICE)).toBe(2); // (S+2 - S+1) + (S+6 - S+5) = 1 + 1
+    expect(indexer.checkAllocation(BOB)).toBe(1); // S+4 - S+3 = 1
   });
 
   it("accumulates hold across two mints held simultaneously by the same wallet", async () => {
@@ -163,7 +163,7 @@ describe("NftHoldIndexer", () => {
     const indexer = makeIndexer(new Set([MINT, MINT_B]));
     await indexer.run();
 
-    expect(indexer.holdSlots(ALICE)).toBe(6); // (S+4-S+1) + (S+6-S+3) = 3+3
-    expect(indexer.holdSlots(BOB)).toBe(4); // (S+8-S+5) + (S+8-S+7) = 3+1
+    expect(indexer.checkAllocation(ALICE)).toBe(6); // (S+4-S+1) + (S+6-S+3) = 3+3
+    expect(indexer.checkAllocation(BOB)).toBe(4); // (S+8-S+5) + (S+8-S+7) = 3+1
   });
 });
