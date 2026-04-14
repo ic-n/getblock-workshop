@@ -24,10 +24,11 @@ import { NftHoldIndexer } from "../indexer";
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 // Real 32-byte base58 keys repurposed as test labels.
 
-const MINT = "GkNkuozgNFN7K5AAjmFjMSFnNegpqkwEGbJyEXGq7LYR"; // stands in for MadLads mint
-const ALICE = "5ByhkuHZMH7sU36DhfNMjy78hSMTPKJ1UEdDJqoKkmrU"; // primary holder
+const MINT   = "GkNkuozgNFN7K5AAjmFjMSFnNegpqkwEGbJyEXGq7LYR"; // stands in for MadLads mint #1
+const MINT_B = "5ByhkuHZMH7sU36DhfNMjy78hSMTPKJ1UEdDJqoKkmrU"; // MadLads mint #2 (multi-mint test)
+const ALICE  = "ALkD8o2AsHFMNGBMCFJzRr6J2xGk7UXpunGwRLiTvtGm"; // primary holder
 const ESCROW = "9nJ7BWiAsNEHzFBtNXLFKFuJJupCdMwZ6xGZZNYPumpE"; // marketplace escrow (excluded)
-const BOB = "3mEH6iBwWqZt94dVijMQEXTMv4GVhMT9BAnBHK7HEJKP"; // secondary buyer
+const BOB    = "3mEH6iBwWqZt94dVijMQEXTMv4GVhMT9BAnBHK7HEJKP"; // secondary buyer
 
 const MARKETPLACE_ESCROWS = new Set([ESCROW]);
 
@@ -39,11 +40,11 @@ afterEach(() => {
   }
 });
 
-function makeIndexer(): NftHoldIndexer {
+function makeIndexer(mints = new Set([MINT])): NftHoldIndexer {
   return new NftHoldIndexer(
     new MockClient("https://mock", "token"),
-    MINT,
-    MARKETPLACE_ESCROWS
+    mints,
+    MARKETPLACE_ESCROWS,
   );
 }
 
@@ -157,5 +158,35 @@ describe("NftHoldIndexer", () => {
 
     expect(indexer.holdSlots(ALICE)).toBe(2); // (S+2 - S+1) + (S+6 - S+5) = 1 + 1
     expect(indexer.holdSlots(BOB)).toBe(1); // S+4 - S+3 = 1
+  });
+
+  it("accumulates hold across two mints held simultaneously by the same wallet", async () => {
+    // ALICE holds MINT and MINT_B at the same time.
+    // Without the composite key this would corrupt one of the open slots.
+    //
+    //   S+0  mint_a account                (mintedNFT MINT 1/2)
+    //   S+1  ALICE token_a amount=1        (mintedNFT MINT 2/2)  → MINT|ALICE opens @S+1
+    //   S+2  mint_b account                (mintedNFT MINT_B 1/2)
+    //   S+3  ALICE token_b amount=1        (mintedNFT MINT_B 2/2)→ MINT_B|ALICE opens @S+3
+    //   S+4  ALICE token_a amount=0        (transfer MINT 1/2)   → MINT|ALICE closes, 3 slots
+    //   S+5  BOB   token_a amount=1        (transfer MINT 2/2)   → MINT|BOB opens @S+5
+    //   S+6  ALICE token_b amount=0        (transfer MINT_B 1/2) → MINT_B|ALICE closes, 3 slots
+    //   S+7  BOB   token_b amount=1        (transfer MINT_B 2/2) → MINT_B|BOB opens @S+7
+    //   S+8  slot update                   → lastSlot = S+8
+    //   EOF  MINT|BOB: S+8-S+5=3, MINT_B|BOB: S+8-S+7=1 → BOB total = 4
+    const ysm = new YellowStoneMock();
+    ysm
+      .push(mintedNFT(MINT,   ALICE))
+      .push(mintedNFT(MINT_B, ALICE))
+      .push(transferNFT(MINT,   ALICE, BOB))
+      .push(transferNFT(MINT_B, ALICE, BOB))
+      .push(slotUpdate())
+      .end();
+
+    const indexer = makeIndexer(new Set([MINT, MINT_B]));
+    await indexer.run();
+
+    expect(indexer.holdSlots(ALICE)).toBe(6); // (S+4-S+1) + (S+6-S+3) = 3+3
+    expect(indexer.holdSlots(BOB)).toBe(4);   // (S+8-S+5) + (S+8-S+7) = 3+1
   });
 });
