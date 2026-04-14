@@ -1,34 +1,13 @@
-/**
- * NftHoldIndexer — TDD test suite
- *
- * Scenario: MadLads NFT allocation for a $BP airdrop.
- *
- * Slot layout (mock counter starts at 280_000_000, +1 per factory):
- *
- *   mintedNFT(MINT, ALICE)          → [mint_acct@S+0, alice_token_1@S+1]
- *   transferNFT(MINT, ALICE, ESCROW)→ [alice_token_0@S+2, escrow_token_1@S+3]
- *   transferNFT(MINT, ESCROW, BOB)  → [escrow_token_0@S+4, bob_token_1@S+5]
- *   slotUpdate()                    → [slot@S+6]
- *
- * Hold periods:
- *   ALICE  : S+1 → S+2  = 1 slot   (mint to outbound transfer)
- *   ESCROW : excluded               (marketplace program — zero allocation)
- *   BOB    : S+5 → S+6  = 1 slot   (inbound transfer to stream EOF)
- */
-
 import { describe, it, expect, afterEach } from "@jest/globals";
 import { YellowStoneMock, MockClient } from "yellowstone-grpc-mock";
 import { mintedNFT, transferNFT, slotUpdate } from "yellowstone-grpc-mock";
 import { NftHoldIndexer } from "../indexer";
 
-// ── Test fixtures ─────────────────────────────────────────────────────────────
-// Real 32-byte base58 keys repurposed as test labels.
-
-const MINT   = "GkNkuozgNFN7K5AAjmFjMSFnNegpqkwEGbJyEXGq7LYR"; // stands in for MadLads mint #1
-const MINT_B = "5ByhkuHZMH7sU36DhfNMjy78hSMTPKJ1UEdDJqoKkmrU"; // MadLads mint #2 (multi-mint test)
-const ALICE  = "ALkD8o2AsHFMNGBMCFJzRr6J2xGk7UXpunGwRLiTvtGm"; // primary holder
-const ESCROW = "9nJ7BWiAsNEHzFBtNXLFKFuJJupCdMwZ6xGZZNYPumpE"; // marketplace escrow (excluded)
-const BOB    = "3mEH6iBwWqZt94dVijMQEXTMv4GVhMT9BAnBHK7HEJKP"; // secondary buyer
+const MINT = "GkNkuozgNFN7K5AAjmFjMSFnNegpqkwEGbJyEXGq7LYR";
+const MINT_B = "5ByhkuHZMH7sU36DhfNMjy78hSMTPKJ1UEdDJqoKkmrU";
+const ALICE = "ALkD8o2AsHFMNGBMCFJzRr6J2xGk7UXpunGwRLiTvtGm";
+const ESCROW = "9nJ7BWiAsNEHzFBtNXLFKFuJJupCdMwZ6xGZZNYPumpE";
+const BOB = "3mEH6iBwWqZt94dVijMQEXTMv4GVhMT9BAnBHK7HEJKP";
 
 const MARKETPLACE_ESCROWS = new Set([ESCROW]);
 
@@ -44,11 +23,9 @@ function makeIndexer(mints = new Set([MINT])): NftHoldIndexer {
   return new NftHoldIndexer(
     new MockClient("https://mock", "token"),
     mints,
-    MARKETPLACE_ESCROWS,
+    MARKETPLACE_ESCROWS
   );
 }
-
-// ── Unit cases ────────────────────────────────────────────────────────────────
 
 describe("NftHoldIndexer", () => {
   it("measures hold from mint to first outbound transfer", async () => {
@@ -176,9 +153,9 @@ describe("NftHoldIndexer", () => {
     //   EOF  MINT|BOB: S+8-S+5=3, MINT_B|BOB: S+8-S+7=1 → BOB total = 4
     const ysm = new YellowStoneMock();
     ysm
-      .push(mintedNFT(MINT,   ALICE))
+      .push(mintedNFT(MINT, ALICE))
       .push(mintedNFT(MINT_B, ALICE))
-      .push(transferNFT(MINT,   ALICE, BOB))
+      .push(transferNFT(MINT, ALICE, BOB))
       .push(transferNFT(MINT_B, ALICE, BOB))
       .push(slotUpdate())
       .end();
@@ -187,6 +164,6 @@ describe("NftHoldIndexer", () => {
     await indexer.run();
 
     expect(indexer.holdSlots(ALICE)).toBe(6); // (S+4-S+1) + (S+6-S+3) = 3+3
-    expect(indexer.holdSlots(BOB)).toBe(4);   // (S+8-S+5) + (S+8-S+7) = 3+1
+    expect(indexer.holdSlots(BOB)).toBe(4); // (S+8-S+5) + (S+8-S+7) = 3+1
   });
 });
