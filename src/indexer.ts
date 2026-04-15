@@ -1,5 +1,10 @@
 import { CommitmentLevel, SubscribeUpdate } from "@triton-one/yellowstone-grpc";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  ACCOUNT_SIZE,
+  AccountLayout,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import base58 from "bs58";
 
 export interface GeyserClient {
   subscribe(): Promise<{
@@ -11,6 +16,11 @@ export interface GeyserClient {
 }
 
 export class NftHoldIndexer {
+  activeHolders = new Map<string, bigint>(); // address => start slot
+  allocation = new Map<string, number>(); // address => current allocation
+
+  lastSlot = -1n;
+
   constructor(
     readonly client: GeyserClient,
     readonly mints: Set<string>,
@@ -47,15 +57,70 @@ export class NftHoldIndexer {
   }
 
   onData(u: SubscribeUpdate) {
-    // todo
+    if (u.slot) {
+      this.lastSlot = BigInt(u.slot.slot);
+      return;
+    }
+
+    if (!u.account) return;
+
+    const slot = BigInt(u.account.slot);
+
+    if (slot > this.lastSlot) this.lastSlot = slot;
+
+    if (!u.account.account) return;
+    if (base58.encode(u.account.account.owner) !== TOKEN_PROGRAM_ID.toBase58())
+      return;
+
+    if (u.account.account.data.length !== ACCOUNT_SIZE) return;
+
+    const message = AccountLayout.decode(Buffer.from(u.account.account.data));
+    const address = message.owner.toBase58();
+    const mint = message.mint.toBase58();
+    const key = `${address}\n${mint}`;
+
+    if (this.excluded.has(address)) return;
+
+    switch (message.amount) {
+      case 0n: // no longer has nft
+        const startSlot = this.activeHolders.get(key);
+        if (!startSlot) return;
+
+        const deltaTime = slot - startSlot;
+
+        const currentAllocation = this.allocation.get(address) ?? 0;
+
+        this.allocation.set(address, currentAllocation + Number(deltaTime));
+
+        this.activeHolders.delete(key);
+
+        break;
+
+      case 1n: // just bought nft
+        this.activeHolders.set(key, slot);
+        break;
+
+      default:
+        break;
+    }
   }
 
   onEnd() {
-    // todo
+    for (const [k, v] of this.activeHolders) {
+      const address = k.split("\n").at(0)!;
+      const startSlot = v;
+
+      const deltaTime = this.lastSlot - startSlot;
+
+      const currentAllocation = this.allocation.get(address) ?? 0;
+
+      this.allocation.set(address, currentAllocation + Number(deltaTime));
+    }
+
+    this.activeHolders.clear();
   }
 
   checkAllocation(wallet: string): number {
-    // todo
-    return -1;
+    return this.allocation.get(wallet) ?? 0;
   }
 }
