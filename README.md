@@ -1,5 +1,11 @@
 # Real-time NFT Hold Indexer — GetBlock Workshop
 
+LINKS:
+
+- My Linked-in (https://www.linkedin.com/in/niklone/)[https://www.linkedin.com/in/niklone/]
+- My Twitter (https://x.com/nikyola_demonke)[https://x.com/nikyola_demonke]
+- How to Track Pump.fun Mints in Real-Time with Solana gRPC Geyser Plugin via GetBlock (https://www.youtube.com/watch?v=AZotjvQpGjg)[https://www.youtube.com/watch?v=AZotjvQpGjg]
+
 A workshop demo for **Yellowstone gRPC** (Solana's real-time event stream). It indexes how long each wallet holds a specific NFT mint and computes token allocation based on hold duration — fully testable offline with a gRPC mock, no live RPC connection required.
 
 The punchline: **swapping the mock for a real Yellowstone client is a one-line change.**
