@@ -2,9 +2,9 @@
 
 LINKS:
 
-- My Linked-in (https://www.linkedin.com/in/niklone/)[https://www.linkedin.com/in/niklone/]
-- My Twitter (https://x.com/nikyola_demonke)[https://x.com/nikyola_demonke]
-- How to Track Pump.fun Mints in Real-Time with Solana gRPC Geyser Plugin via GetBlock (https://www.youtube.com/watch?v=AZotjvQpGjg)[https://www.youtube.com/watch?v=AZotjvQpGjg]
+- My Linked-in https://www.linkedin.com/in/niklone/
+- My Twitter https://x.com/nikyola_demonke
+- How to Track Pump.fun Mints in Real-Time with Solana gRPC Geyser Plugin via GetBlock https://www.youtube.com/watch?v=AZotjvQpGjg
 
 A workshop demo for **Yellowstone gRPC** (Solana's real-time event stream). It indexes how long each wallet holds a specific NFT mint and computes token allocation based on hold duration — fully testable offline with a gRPC mock, no live RPC connection required.
 
@@ -41,9 +41,9 @@ The indexer knows nothing about where the stream comes from. It only talks to `G
 interface GeyserClient {
   subscribe(): Promise<{
     write(req: unknown): void;
-    on(event: "data",  listener: (update: unknown) => void): unknown;
+    on(event: "data", listener: (update: unknown) => void): unknown;
     on(event: "error", listener: (err: Error) => void): unknown;
-    on(event: "end",   listener: () => void): unknown;
+    on(event: "end", listener: () => void): unknown;
   }>;
 }
 ```
@@ -129,7 +129,11 @@ ysm
   .push(slotUpdate())
   .end();
 
-const indexer = new NftHoldIndexer(new MockClient("https://mock", "token"), MINT, escrows);
+const indexer = new NftHoldIndexer(
+  new MockClient("https://mock", "token"),
+  MINT,
+  escrows
+);
 await indexer.run();
 
 expect(indexer.holdSlots(ALICE)).toBe(1);
@@ -150,9 +154,9 @@ import Client from "@triton-one/yellowstone-grpc";
 import { NftHoldIndexer } from "./src/indexer";
 
 const ENDPOINT = "https://go.getblock.io/<YOUR_ACCESS_TOKEN>/";
-const TOKEN    = "<YOUR_ACCESS_TOKEN>";
+const TOKEN = "<YOUR_ACCESS_TOKEN>";
 
-const client  = new Client(ENDPOINT, TOKEN, {});
+const client = new Client(ENDPOINT, TOKEN, {});
 const MADLADS = "J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w";
 const ESCROWS = new Set(["<MAGIC_EDEN_ESCROW>", "<TENSOR_ESCROW>"]);
 
