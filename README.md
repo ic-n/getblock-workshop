@@ -5,6 +5,7 @@ LINKS:
 - My Linked-in https://www.linkedin.com/in/niklone/
 - My Twitter https://x.com/nikyola_demonke
 - How to Track Pump.fun Mints in Real-Time with Solana gRPC Geyser Plugin via GetBlock https://www.youtube.com/watch?v=AZotjvQpGjg
+- Slots and EPOCHS in Solana by Lakestake https://www.youtube.com/watch?v=n10PmthNcG4
 
 A workshop demo for **Yellowstone gRPC** (Solana's real-time event stream). It indexes how long each wallet holds a specific NFT mint and computes token allocation based on hold duration — fully testable offline with a gRPC mock, no live RPC connection required.
 
